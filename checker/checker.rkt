@@ -1,5 +1,4 @@
-; Sam Sauder
-; 9/30/24
+; Sam Sauder 9/30/24
 ; Purpose: implementing a basic English sentence validity checker using a 
 ;   context-free grammar
 ;   
@@ -11,20 +10,6 @@
 #lang racket
 
 #|
-; go word by word in sentence to ensure that it adheres to the defined grammar
-(define (check sentence)
-    ; is the first word an N, Det, or something else?
-    ;   case N:
-    ;   case Det: 
-    ;       is the second word an N, Adj, or something else?
-    ;           case N: 
-    ;           case Adj: 
-    ;           else: 
-    ;       
-    ;   else: INVALID
-  )
-|#
-
 ; checks a phrase for validity (a phrase is any element of V for grammar G)
 (define (check_one phrase)
   ; which phrase?
@@ -55,18 +40,40 @@
   ;                 (cadr phrase) is NP?
   ;                     yes: 
   )
+|#
+
+
+; returns the tag of the word in lexicon or "X" if not present
+(define (tag_of word lex)
+    (if (equal? '() lex) "X"  ; if lex is empty, return "X"
+        (if (equal? (caar lex) word) 
+            (cadr (car lex))        ; return the tag of the first word-tag pair (base case)
+            (tag_of word (cdr lex))  ; else search the rest of lex (recursive case)
+        )
+    )
+  )
 
 ; checks a word for syntactic validity 
 ; a word is valid if its expected tag matches its actual tag (according to the provided lexicon)
-;   return 0 if 'word' is valid, 
-;   return 1 if 'word' is invalid (syntactically inappropriate)
-(define (valid? word tag)
-    ; match
-    ;   return 0 
-    ; mismatch
-    ;   return 1
-  )
+;   return #t if 'word' is valid 
+;   return #f if 'word' is invalid (syntactically inappropriate)
+(define (valid? word tag_expected lex)
+    (equal? (tag_of word lex) tag_expected))
 
+
+; Program testing
+; ===============
+
+; Test lexicon 
+(define l (list 
+            (list "I" "N") 
+            (list "see" "V") 
+            (list "something" "N")))
+
+(valid? "see" "V" l)
+;; (tag_of "something" l)
+
+#|
 ; A sentence takes a string
 (define (S str)
   ; concatenate NP and VP 
@@ -89,3 +96,4 @@
   ; concatenate P and NP
   )
 
+|#
