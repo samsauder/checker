@@ -9,56 +9,61 @@
 
 #lang racket
 
-#|
-; checks a phrase for validity (a phrase is any element of V for grammar G)
-(define (check_one phrase)
-  ; which phrase?
-  ;     case NP:
-  ;         (car phrase) is N OR Det?
-  ;             case N:
-  ;                 (N (car phrase))
-  ;
-  ;             case Det:
-  ;                 (cadr phrase) is N or Adj?
-  ;                  case N: 
-  ;                  case Adj:
-  ;                     (caddr phrase) is N?
-  ;                         yes:
-  ;     case VP:
-  ;         (car phrase) is V?
-  ;             yes: 
-  ;                 (cadr phrase) is NP or Adv?
-  ;                     case NP:
-  ;                         (caddr phrase) is PP?
-  ;                             yes: 
-  ;                             no: 
-  ;                     case Adv:
-  ;
-  ;     case PP: 
-  ;         (car phrase) is P?
-  ;             yes: 
-  ;                 (cadr phrase) is NP?
-  ;                     yes: 
-  )
-|#
+
+; returns phrase_type if the given phrase is composed of a sequence
+;   of words that are in accordance to one of the valid sequences for 
+;   its given phrase type, 'Z' otherwise 
+; args: phrase, phrase_type
+(define (seq_verify phrase lex)
+    ; make a list of the phrase's associated tags
+    (define taglist 
+        (map (lambda (p)
+                (tag p lex))  
+             phrase))  ;; testing new tag function
+    
+    (cond  ;; what type of phrase? 
+        ;; NP
+        [(equal? taglist (list "N"))  "NP"]
+        [(equal? taglist (list "Det" "N"))  "NP"]
+        [(equal? taglist (list "Det" "Adj" "N"))  "NP"]
+         
+        ;; VP
+        [(equal? taglist (list "V"))  "VP"]
+        [(equal? taglist (list "V" "NP"))  "VP"]
+        [(equal? taglist (list "V" "Adv"))  "VP"]
+
+        ;; PP
+        [(equal? taglist (list "P" "NP"))  "PP"]
+
+        [else  "Z"])
+      )
 
 
-; returns the tag of the word in lexicon or "X" if not present
-(define (tag_of word lex)
-    (if (equal? '() lex) "X"  ; if lex is empty, return "X"
-        (if (equal? (caar lex) word) 
-            (cadr (car lex))        ; return the tag of the first word-tag pair (base case)
-            (tag_of word (cdr lex))  ; else search the rest of lex (recursive case)
-        )
-    )
+; return the tag of the given phrase (single word or list of words)
+(define (tag phrase lex)
+    (cond
+        [(equal? '() lex) "M"]  ;; lexicon has been fully searched
+
+        [(= (length phrase) 1)  ;; phrase is a single word  
+            (if (equal? (caar lex) phrase)
+                    (cadr (car lex))  ; return the tag of the first word
+                    (tag phrase (cdr lex))  ; else
+              )
+         ]
+
+        [(> (length phrase) 1)  ;; phrase is a list of words
+            (seq_verify phrase lex) 
+         ]
+      )
   )
+
 
 ; checks a word for syntactic validity 
 ; a word is valid if its expected tag matches its actual tag (according to the provided lexicon)
 ;   return #t if 'word' is valid 
 ;   return #f if 'word' is invalid (syntactically inappropriate)
 (define (valid? word tag_expected lex)
-    (equal? (tag_of word lex) tag_expected))
+    (equal? (tag word lex) tag_expected))
 
 
 ; Program testing
@@ -70,7 +75,9 @@
             (list "see" "V") 
             (list "something" "N")))
 
-(valid? "see" "V" l)
+(seq_verify (list "see" "something") l)
+
+;; (valid? "see" "V" l)
 ;; (tag_of "something" l)
 
 #|
