@@ -38,23 +38,14 @@
       )
   )
 
-;; ARGS: a phrase, a lexicon
-;; Return the tag of the given phrase (single word or list of words)
-(define (tag phrase lex)
-    (cond
-        [(not (list? phrase))  ;; phrase is a single word
-            (cond
-                [(equal? (caar lex) phrase)  ;; 'phrase' matches the first word in the lexicon
-                    (cadr (car lex))]        ;; return the tag of 'phrase'
 
-                [else 
-                  (tag phrase (cdr lex))]  ;; tag 'phrase' using the rest of the lexicon
-            )]    
-       
-        [(list? phrase)  ;; phrase is a list of words
-            (type_of phrase lex)  ;; testing new function
-           ]
-        ))
+;; ARGS: a word, a lexicon
+;; PRECONDITION: w is in lex
+;; Return the tag of w in lex
+(define (tag w lex)
+   (if (equal? w (caar lex))  ;; does w match the first word in the lexicon?
+        (cadr (car lex))      ;; match, return the tag of w in the lexicon 
+        (tag w (cdr lex))))   ;; mismatch, search the rest of the lexicon for a match 
 
 
 ; Checks a word for syntactic validity 
@@ -77,6 +68,10 @@
             [list "hedge" "N"]
             ))
 
+;; Test phrase
+(define phr 
+  (list "see" "the" "thing"))
 
-(type_of (list "see" "the" "thing") l)
+
+(type_of phr l)  ;; return the phrase type
 
