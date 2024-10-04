@@ -68,10 +68,9 @@
             [list "hedge" "N"]
             ))
 
-;; Test phrase
-(define phr 
-  (list "see" "the" "thing"))
-
+;; Test phrase using command line arguments
+(define phr
+  (vector->list (current-command-line-arguments)))
 
 (type_of phr l)  ;; return the phrase type
 
