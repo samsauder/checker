@@ -9,58 +9,6 @@
 
 #lang racket
 
-#|
-; returns phrase_type if the given phrase is composed of a sequence
-;   of words that are in accordance to one of the valid sequences for 
-;   its given phrase type, 'Z' otherwise 
-; args: phrase, phrase_type
-(define (seq_verify phrase lex)
-    (define taglist (tag_all phrase lex))
-    
-    (display "taglist: ")
-    (display taglist)
-    (display "\n")
-
-    (cond  ;; what type of phrase? 
-        ;; NP
-        [(equal? taglist (list "N"))  "NP"]
-        [(equal? taglist (list "Det" "N"))  "NP"]
-        [(equal? taglist (list "Det" "Adj" "N"))  "NP"]
-         
-        ;; VP
-        [(equal? taglist (list "V"))  "VP"]
-        [(equal? taglist (list "V" "NP"))  "VP"]
-        [(equal? taglist (list "V" "Adv"))  "VP"]
-
-        ;; PP
-        [(equal? taglist (list "P" "NP"))  "PP"]
-
-        [else  "Z"])
-    )
-|#
-
-
-;; type_of
-;; ==================================================================
-;;      get the tag of the first element of the list
-;;      seq_verify rest of list
-
-;;      NP:
-;;      if the tag of the first word in the list is "Det" AND
-;;      the tag of the second word in the list is "N", THEN
-;;          return "NP"
-
-;;      VP:
-;;      if the tag of the first word in the list is "V" AND 
-;;      the phrase type of the rest of the list is "NP", THEN
-;;          return "VP"
-
-;;      PP:
-;;      if the tag of the first word in the list is "P" AND
-;;      the phrase type of the rest of the list is "NP", THEN 
-;;          return "PP"
-;; 
-
 
 ;; ARGS: a phrase, a lexicon
 ;; Return the phrase type of the given list of words, or
@@ -90,19 +38,8 @@
       )
   )
 
-#|
-;; tag_all
-;; Args: a list of words
-;; Tags the first word in the list and appends that value with the tag of the rest of the list
-(define (tag_all phrase lex)
-    (map 
-      (lambda (p)
-        (tag p lex))     
-      phrase)
-    )
-|#
-
-; return the tag of the given phrase (single word or list of words)
+;; ARGS: a phrase, a lexicon
+;; Return the tag of the given phrase (single word or list of words)
 (define (tag phrase lex)
     (cond
         [(not (list? phrase))  ;; phrase is a single word
@@ -120,7 +57,7 @@
         ))
 
 
-; checks a word for syntactic validity 
+; Checks a word for syntactic validity 
 ; a word is valid if its expected tag matches its actual tag (according to the provided lexicon)
 ;   return #t if 'word' is valid 
 ;   return #f if 'word' is invalid (syntactically inappropriate)
@@ -128,7 +65,7 @@
     (equal? (tag word lex) tag_expected))
 
 
-; Program testing
+; Program Testing
 ; ===============
 
 ; Test lexicon 
