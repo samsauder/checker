@@ -41,6 +41,55 @@
       )
   )
 
+
+;; INPUT: a list of words, a lexicon 
+;; OUTPUT: #t if wlist is a sentence, #f otherwise 
+;; (define (sentence? wlist lex)
+;;      ;; if wlist starts with a NP:
+;;      ;;      let Q be the sublist of wlist starting after the last word in the NP
+;;
+;;      ;;      if the type of Q is VP: return #t 
+;;      ;;      else: return #f
+;;      ;; else: return #f
+;; 
+;; )
+;;
+
+;; =======================================================
+;; NEW HELPER FUNCTIONS
+;; =======================================================
+;; subafter_NP:
+;; ARGS: list of words, lexicon
+;; returns the sublist immediately following the last word of the first NP of wlist 
+;;   otherwise return null
+
+
+(define (subafter wlist lex)  
+    (define tag1 (tag (car wlist) lex))  ;; tag associated with the first word 
+
+    (cond 
+        [(equal? tag1 "N") 
+            (cdr wlist)]  ;; base case
+        [else 
+            (subafter (cdr lex) lex)
+         ]  ;; rec case
+      )    
+  )
+
+
+;; (subafter (list ) )
+(exit)
+
+
+
+
+;; =======================================================
+
+
+
+
+
+
 #|
 ;; returns the word following the first found phrase in wlist
 ;; "none" otherwise
@@ -91,7 +140,7 @@
 
 
 
-
+#|
 ;; Find the types of two phrases in wlist
 ;; ARGS: a list of words, the first phrase built so far, 
 ;; , a tuple containing the type of both phrases, a lexicon 
@@ -127,7 +176,7 @@
         [else               ;; phrase is invalid  
             (type_all (cdr wlist) phr_new type_tuple lex)])
   )
-
+|#
 
 #|
 ;; ARGS: a list of words, a word to stop after
@@ -190,7 +239,7 @@
 ;; (type_of phr l)  ;; return the phrase type
 ;; (type_all wlist '() '() l)  ;; return the phrase type
 
-(sentence? wlist l)  ;; is wlist a sentence?
+;; (sentence? wlist l)  ;; is wlist a sentence?
 
 
 
