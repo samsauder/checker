@@ -7,7 +7,7 @@
 ;; R = { .. }
 
 #lang racket
-(provide Vp Np Np*)
+(provide S Vp Np Np*)
 
 ;; For production rules for variable X, with input of word w:
 ;;      if w can be derived from X: return #t
@@ -60,7 +60,6 @@
   (cond
     [(equal? w "dn") #t]
     [(equal? w "n") #t]
-    [(equal? w "") #t]
     [else #f]
     )
   )
@@ -69,7 +68,7 @@
 ;; Np* -> Np | e
 (define (Np* w)
   (cond
-    [(null? w) #t]
+    [(equal? w "") #t]
     [else (Np w)]
     )
   )
