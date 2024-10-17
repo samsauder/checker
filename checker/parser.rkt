@@ -9,47 +9,52 @@
 #lang racket
 (provide S Vp Np Np*)
 
-;; For production rules for variable X, with input of word w:
-;;      if w can be derived from X: return #t
-;;      else: return #f
-
 
 ;; PRODUCTION RULE FUNCTIONS
-;; =========================
+;; =============================================================
+;; ARGS: a tags-string (w)
+;; For production rules for variable X:
+;;      if w can be derived from X: return #t
+;;      else: return #f
+;; =============================================================
 
 
 ;; S -> NpVp
 (define (S w)
-    (define i (Vp_index w))  ;; index of the first char of the Vp
+    (define i (Vp_index w))  ;; index of the char after the last char in the Np
 
-    (cond 
-        [(not (equal? i -1))  ;; begins with a Np 
-            (Vp (substring w i (string-length w)))]
-        [else #f]  ;; does not begin with a Np
-      )
+    (cond
+        [(eq? i -1)  #f]  ;; no Np
+        [else
+              (Vp (substring w i (string-length w)))]
+        )
   )
 
 
 ;; Return the index of the first character of the Vp in w (assuming there was a previous Np)
 ;; or -1 if there is no Np
 (define (Vp_index w)
+    (define wlen (string-length w))  ;; length of tags-string, w
+
     (cond
-        [{and (> (string-length w) 1) 
-              (equal? (substring w 0 1) "n")}
-            1]
-        [{and (> (string-length w) 2)
-              (equal? (substring w 0 2) "dn")}
-            2]
-        [else -1] 
+        ;; w is longer than 1 and the substring up to index 1 is "n" 
+        [{and (> wlen 1) (equal? (sub w 1) "n")}  1]
+
+        ;; w is longer than 2 and the substring up to index 2 is "dn"
+        [{and (> wlen 2) (equal? (sub w 2) "dn")}  2]
+        
+        [else  -1] 
       )
   )
+
 
 ;; Vp -> vNp*
 (define (Vp w)
   (cond
-    [(equal? (substring w 0 1) "v") 
-        (Np* (substring w 1))]
-    [else #f]
+    [(equal? (sub w 1) "v")
+        (Np* (substring w 1))]  ;; is the rest of w a valid complement? 
+    
+    [else  #f]
     )
   )
 
@@ -58,9 +63,11 @@
 ;; Np -> n
 (define (Np w)
   (cond
-    [(equal? w "dn") #t]
-    [(equal? w "n") #t]
-    [else #f]
+    [{or 
+      (equal? w "dn") 
+      (equal? w "n")}  #t]
+
+    [else  #f]
     )
   )
 
@@ -68,7 +75,17 @@
 ;; Np* -> Np | e
 (define (Np* w)
   (cond
-    [(equal? w "") #t]
+    [(equal? w "")  #t]
+    
     [else (Np w)]
     )
   )
+
+
+;; HELPER FUNCTIONS
+;; ARGS: a tags-string (w), the end index of the substring 
+;; Returns the substring of w from 0 to end_index - 1 
+(define (sub w end_index)
+    (substring w 0 end_index))
+
+
