@@ -18,7 +18,6 @@
 ;;      else: return #f
 ;; =============================================================
 
-
 ;; S -> NpVp
 (define (S w)
     (define i (Vp_index w))  ;; index of the char after the last char in the Np
@@ -34,18 +33,12 @@
 ;; Return the index of the first character of the Vp in w (assuming there was a previous Np)
 ;; or -1 if there is no Np
 (define (Vp_index w)
-    (define wlen (string-length w))  ;; length of tags-string, w
+    (define l (string-length w))  ;; length of tags-string, w
 
     (cond
-        ;; w is longer than 1 and the substring up to index 1 is "n" 
-        [{and (> wlen 1) (equal? (sub w 1) "n")}  1]
-
-        ;; w is longer than 2 and the substring up to index 2 is "dn"
-        [{and (> wlen 2) (equal? (sub w 2) "dn")}  2]
-        
-        [else  -1] 
-      )
-  )
+        [{and (> l 1) (Np (sub w 1))}  1]  ;; substring up to 1 is a Np
+        [{and (> l 2) (Np (sub w 2))}  2]  ;; substring up to 2 is a Np
+        [else -1]))
 
 
 ;; Vp -> vNp*
@@ -59,17 +52,14 @@
   )
 
 
-;; Np -> dn
-;; Np -> n
+;; Np -> n | dn
+;; PRECONDITION: length of w is at least 1
 (define (Np w)
-  (cond
-    [{or 
-      (equal? w "dn") 
-      (equal? w "n")}  #t]
-
-    [else  #f]
-    )
-  )
+    (cond
+      [(n? (sub w 1)) #t]  ;; is the first tag noun? 
+      [(d? (sub w 1))      ;; is the first tag a determiner? 
+        (n? (substring w 1))]  ;; is the complement a noun?
+      [else #f]))
 
 
 ;; Np* -> Np | e
@@ -82,10 +72,19 @@
   )
 
 
+;; terminal testers
+(define (n? w)
+    (if (equal? w "n") #t #f))
+
+(define (v? w)
+    (if (equal? w "v") #t #f))
+
+(define (d? w)
+    (if (equal? w "d") #t #f))
+
+
 ;; HELPER FUNCTIONS
 ;; ARGS: a tags-string (w), the end index of the substring 
 ;; Returns the substring of w from 0 to end_index - 1 
 (define (sub w end_index)
     (substring w 0 end_index))
-
-
