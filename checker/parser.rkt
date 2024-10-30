@@ -1,90 +1,188 @@
 ;; Sam Sauder
-;; 10-11-24
-;; Purpose: implementing an LL(1) parser for simple English sentences
-
-;; V = {S, Vp, Np, Np*} sentence, verb phrase, noun phrase, noun phrase (nullable)
-;; Σ = {v, n, d}  verb, noun, determiner
-;; R = { .. }
+;; 10/29/24
 
 #lang racket
-(provide S Vp Np Np*)
+(provide S)
 
 
-;; PRODUCTION RULE FUNCTIONS
-;; =============================================================
-;; ARGS: a tags-string (w)
-;; For production rules for variable X:
-;;      if w can be derived from X: return #t
-;;      else: return #f
-;; =============================================================
+;; This parser accepts all strings in the language L(G) where...
+;;
+;; Context Free Grammar, G = (V, Σ, R, S)
+;; ===========================================
+;; terminals (Σ) = {d, n, v, p, aj, av}
+;;
+;; variables (V) = {S, Np, Np^, Pp, Pp*, Vp}
+;;
+;; rules (R) = {
+;;              S   -> Np Vp 
+;;              Np  ->   d Np^ | n
+;;              Np^ ->    aj n | n
+;;              X*  ->  Np Pp* | av | e
+;;              Pp  ->  p Np
+;;              Pp* ->  Pp | e 
+;;              Vp  ->  v X*
+;;              }
+;;
+;; start variable (S) 
+;; ===========================================
+;; d: determiner
+;; n: noun
+;; v: verb
+;; p: preposition
+;; aj: adjective
+;; av: adverb
+;; ===========================================
 
-;; S -> NpVp
-(define (S w)
-    (define i (Vp_index w))  ;; index of the char after the last char in the Np
 
+;; S -> Np Vp
+(define (S tags) 
+    (define NounPhrase (Np tags))
+    (define VerbPhrase (Vp (tag-break tags 'v)))
+
+    (append NounPhrase VerbPhrase)
+    )
+
+
+;; Np -> d Np^ | n
+(define (Np tags)
+   (cond
+        [(null? tags) 
+            (error "[PARSER]  Syntax Error: tags do not form a Noun Phrase")]
+
+        [(starts_with? tags 'd) 
+            (append '(d) (Np^ (cdr tags)))]
+
+        [(starts_with? tags 'n)
+            '(n)]
+
+        [else 
+            (error "[PARSER]  Syntax Error: tags do not form a Noun Phrase")] 
+    )
+  )
+
+
+(define (N tags)
+  (if (equal? (car tags) 'n)
+      '(n)
+      (error "[PARSER]  Syntax Error: tag is not a noun")
+    )
+  )
+
+
+;; Np^ -> aj n | n
+(define (Np^ tags)
     (cond
-        [(eq? i -1)  #f]  ;; no Np
+        [(null? tags) 
+            (error "[PARSER]  Syntax Error: tags do not form a Noun Phrase") 
+         ]
+
+        [(starts_with? tags 'aj) 
+            (append '(aj) (N (cdr tags))) 
+         ]
+
+        [(starts_with? tags 'n) 
+            '(n)
+         ]
+
         [else
-              (Vp (substring w i (string-length w)))]
-        )
+            (error "[PARSER]  Syntax Error: tags do not form a Noun Phrase")] 
+      )
   )
 
 
-;; Return the index of the first character of the Vp in w (assuming there was a previous Np)
-;; or -1 if there is no Np
-(define (Vp_index w)
-    (define l (string-length w))  ;; length of tags-string, w
+;; X* -> Np Pp* | av | e
+(define (X* tags)
+    (cond  
+        [(null? tags) null]
 
+        [(starts_with? tags 'av)
+         '(av)]
+
+        [{or (starts_with? tags 'n)
+             (starts_with? tags 'd)}
+            (append (Np tags)
+                    (Pp* (tag-break tags 'p)))]
+
+        [else (error "[PARSER]  Syntax Error: tags do not form a Verb Phrase")]
+      ) 
+  )
+
+
+;; Pp -> p Np
+(define (Pp tags)
     (cond
-        [{and (> l 1) (Np (sub w 1))}  1]  ;; substring up to 1 is a Np
-        [{and (> l 2) (Np (sub w 2))}  2]  ;; substring up to 2 is a Np
-        [else -1]))
+        [(null? tags) 
+            (error "[PARSER]  Syntax Error: tags do not form a Prepositional Phrase")]
 
-
-;; Vp -> vNp*
-(define (Vp w)
-  (cond
-    [(equal? (sub w 1) "v")
-        (Np* (substring w 1))]  ;; is the rest of w a valid complement? 
-    
-    [else  #f]
-    )
+        [(starts_with? tags 'p)
+            (append '(p) (Np (cdr tags)))] 
+        
+        [else (error "[PARSER]  Syntax Error: tags do not form a Prepositional Phrase")]
+      )
   )
 
 
-;; Np -> n | dn
-;; PRECONDITION: length of w is at least 1
-(define (Np w)
+;; Pp* -> Pp | e 
+(define (Pp* tags)
+    (cond 
+        [(null? tags) null]
+
+        [(starts_with? tags 'p)
+            (Pp tags)]
+
+        [else (error "[PARSER]  Syntax Error: tags do not form a Verb Phrase")]
+      )
+)
+
+
+;; Vp -> v X*
+(define (Vp tags)
     (cond
-      [(n? (sub w 1)) #t]  ;; is the first tag noun? 
-      [(d? (sub w 1))      ;; is the first tag a determiner? 
-        (n? (substring w 1))]  ;; is the complement a noun?
-      [else #f]))
+        [(null? tags) 
+            (error "[PARSER]  Syntax Error: tags do not form a Verb Phrase")]
 
+        [(starts_with? tags 'v) 
+            (append '(v) (X* (cdr tags)))]
 
-;; Np* -> Np | e
-(define (Np* w)
-  (cond
-    [(equal? w "")  #t]
-    
-    [else (Np w)]
-    )
+        [else (error "[PARSER]  Syntax Error: tags do not form a Verb Phrase")]
+      )
   )
 
 
-;; terminal testers
-(define (n? w)
-    (if (equal? w "n") #t #f))
+;; Helper functions
+;; ====================================================================================
 
-(define (v? w)
-    (if (equal? w "v") #t #f))
+;; ARGS: a list of tags, a target tag 
+;; Return the sublist of the given tag list beginning immediately before the first instance of tag
+(define (tag-break tags tag)
+    (cond
+        [(null? tags) null]
 
-(define (d? w)
-    (if (equal? w "d") #t #f))
+        [(starts_with? tags tag)
+            tags]
+
+        [else
+            (tag-break (cdr tags) tag)])
+    )
 
 
-;; HELPER FUNCTIONS
-;; ARGS: a tags-string (w), the end index of the substring 
-;; Returns the substring of w from 0 to end_index - 1 
-(define (sub w end_index)
-    (substring w 0 end_index))
+;; ARGS: a list of tags, a tag
+;; Returns #t if the first element of tags is tag, #f otherwise
+(define (starts_with? tags tag)
+    (if (equal? (car tags) tag) #t #f))
+
+
+;; Command usage
+;; ====================================================================================
+(define (usage)
+    (display "=========================================================================\n");
+    (display "[PARSER]  Usage\n")
+    (display "=========================================================================\n\n");
+    (display "Terminals are represented as symbols.\n")
+    (display "Select from: 'd 'n 'v 'p 'aj 'av\n")
+    (display "Call the sentence procedure: (S [some list of symbols])\n\n")
+
+    (display "If the list of symbols is a sentence, the original list will be returned.\n")
+    (display "Otherwise, the parser will output a syntax error.\n\n")
+    (display "=========================================================================\n");
+  )
